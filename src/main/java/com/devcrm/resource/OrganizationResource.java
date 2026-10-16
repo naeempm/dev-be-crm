@@ -1,6 +1,8 @@
 package com.devcrm.resource;
 
 import com.devcrm.entity.Organization;
+import com.devcrm.repository.OrganizationRepository;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -23,6 +25,9 @@ import java.util.List;
 @Tag(name = "Organization Resource", description = "Operations for managing Organizations connected to MySQL")
 public class OrganizationResource {
 
+    @Inject
+    OrganizationRepository organizationRepository;
+
     @GET
     @Operation(summary = "Get all organizations", description = "Retrieves a list of all organizations stored in the database")
     @APIResponse(
@@ -31,7 +36,7 @@ public class OrganizationResource {
         content = @Content(schema = @Schema(type = SchemaType.ARRAY, implementation = Organization.class))
     )
     public List<Organization> getAll() {
-        return Organization.listAll();
+        return organizationRepository.listAll();
     }
 
     @GET
@@ -46,7 +51,7 @@ public class OrganizationResource {
         @APIResponse(responseCode = "404", description = "Organization not found")
     })
     public Response getById(@Parameter(description = "ID of the organization", required = true) @PathParam("id") Long id) {
-        Organization organization = Organization.findById(id);
+        Organization organization = organizationRepository.findById(id);
         if (organization == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -71,7 +76,7 @@ public class OrganizationResource {
                     .entity("Query parameter 'name' is required")
                     .build();
         }
-        Organization organization = Organization.findByName(name.trim());
+        Organization organization = organizationRepository.findByName(name.trim());
         if (organization == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -94,7 +99,7 @@ public class OrganizationResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Organization name is required").build();
         }
         organization.id = null;
-        organization.persist();
+        organizationRepository.persist(organization);
         return Response.created(URI.create("/api/organizations/" + organization.id)).entity(organization).build();
     }
 
@@ -112,12 +117,17 @@ public class OrganizationResource {
     })
     public Response update(@Parameter(description = "ID of the organization to update", required = true) @PathParam("id") Long id,
                            Organization updated) {
-        Organization entity = Organization.findById(id);
+        Organization entity = organizationRepository.findById(id);
         if (entity == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        if (updated != null && updated.name != null) {
-            entity.name = updated.name;
+        if (updated != null) {
+            if (updated.name != null) {
+                entity.name = updated.name;
+            }
+            if (updated.registrationNumber != null) {
+                entity.registrationNumber = updated.registrationNumber;
+            }
         }
         return Response.ok(entity).build();
     }
@@ -131,7 +141,7 @@ public class OrganizationResource {
         @APIResponse(responseCode = "404", description = "Organization not found")
     })
     public Response delete(@Parameter(description = "ID of the organization to delete", required = true) @PathParam("id") Long id) {
-        boolean deleted = Organization.deleteById(id);
+        boolean deleted = organizationRepository.deleteById(id);
         if (!deleted) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

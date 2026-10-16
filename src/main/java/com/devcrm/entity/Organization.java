@@ -1,21 +1,25 @@
 package com.devcrm.entity;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 /**
  * Hibernate entity representing an Organization.
- * Uses Quarkus Panache for built-in Active Record CRUD operations.
- * 'id' is automatically inherited from PanacheEntity (Long ID, auto-incremented).
+ * Uses GenerationType.IDENTITY for MySQL AUTO_INCREMENT primary keys.
+ * Database operations are managed via {@link com.devcrm.repository.OrganizationRepository}.
  */
 @Entity
 @Table(name = "organizations")
-public class Organization extends PanacheEntity {
+public class Organization {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long id;
 
     @Column(name = "name", nullable = false)
     public String name;
+
+    @Column(name = "registration_number")
+    public String registrationNumber;
 
     public Organization() {
     }
@@ -24,10 +28,8 @@ public class Organization extends PanacheEntity {
         this.name = name;
     }
 
-    /**
-     * Find an organization by its name.
-     */
-    public static Organization findByName(String name) {
-        return find("name", name).firstResult();
+    public Organization(String name, String registrationNumber) {
+        this.name = name;
+        this.registrationNumber = registrationNumber;
     }
 }
